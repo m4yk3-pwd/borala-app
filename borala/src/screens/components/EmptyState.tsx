@@ -1,8 +1,12 @@
 import React from 'react';
 
 import {View, Text, StyleSheet, TouchableOpacity} from 'react-native';
+import {Ionicons} from '@expo/vector-icons';
+import type {ComponentProps} from 'react';
 
 import theme from '../../theme/Theme';
+
+type IconName = ComponentProps<typeof Ionicons>['name'];
 
 interface Props {
   title: string;
@@ -12,6 +16,11 @@ interface Props {
   buttonText?: string;
 
   onPress?: () => void;
+
+  // Permite escolher um ícone mais adequado ao contexto (ex.: "search-outline"
+  // pra "nenhuma carona encontrada", "clipboard-outline" pra "nenhuma solicitação").
+  // Se não passar nada, usa "car-outline".
+  icon?: IconName;
 }
 
 export default function EmptyState({
@@ -21,12 +30,14 @@ export default function EmptyState({
 
   buttonText,
 
-  onPress
+  onPress,
+
+  icon = 'car-outline'
 }: Props) {
   return (
     <View style={styles.container}>
       <View style={styles.iconContainer}>
-        <Text style={styles.icon}>🚗</Text>
+        <Ionicons name={icon} size={36} color={theme.colors.accent} />
       </View>
 
       <Text style={styles.title}>{title}</Text>
@@ -67,10 +78,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
 
     marginBottom: theme.spacing.lg
-  },
-
-  icon: {
-    fontSize: 36
   },
 
   title: {

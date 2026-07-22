@@ -27,7 +27,6 @@ export default function ProfileScreen() {
 
         <Text style={styles.item}> {profile?.ratingAvg ?? 'Sem avaliações'}</Text>
 
-        <Text style={styles.item}> Passageiro</Text>
 
         <TouchableOpacity style={styles.button} onPress={logout}>
           <Text style={styles.buttonText}>Sair da conta</Text>

@@ -5,13 +5,17 @@ import {
   SafeAreaView,
   ScrollView,
   TouchableOpacity,
-  ActivityIndicator
+  ActivityIndicator,
+  Alert
 } from 'react-native';
 import {Ionicons} from '@expo/vector-icons';
 
 import theme from '../theme/Theme';
 import {Ride} from '../types/ride';
+import {Booking, BookingStatus} from '../types/booking';
 import {getRideById} from '../services/rideService';
+import {createBooking, getMyBookingForRide} from '../services/bookingservice';
+import {useAuth} from '../contexts/AuthContext';
 import {styles} from '../screens/RideDetailScreenStyles';
 interface Props {
   route: any;
@@ -20,14 +24,25 @@ interface Props {
 
 export default function RideDetailScreen({route, navigation}: Props) {
   const {rideId} = route.params;
+  const {firebaseUser} = useAuth();
 
   const [ride, setRide] = useState<Ride | null>(null);
+  const [myBooking, setMyBooking] = useState<Booking | null>(null);
   const [loading, setLoading] = useState(true);
+  const [requesting, setRequesting] = useState(false);
 
   useEffect(() => {
     async function loadRide() {
       const result = await getRideById(rideId);
       setRide(result);
+
+      // Se o usuário não é o dono da carona, verifica se ele já tem
+      // uma solicitação pra ela (pra já mostrar o botão no estado certo).
+      if (result && result.driverId !== firebaseUser?.uid) {
+        const existing = await getMyBookingForRide(rideId);
+        setMyBooking(existing);
+      }
+
       setLoading(false);
     }
 
@@ -55,6 +70,34 @@ export default function RideDetailScreen({route, navigation}: Props) {
       hour: '2-digit',
       minute: '2-digit'
     });
+  }
+
+  async function handleRequestRide() {
+    setRequesting(true);
+
+    try {
+      await createBooking(rideId);
+
+
+      setMyBooking({
+        id: 'pending-local',
+        rideId,
+        passengerId: firebaseUser?.uid ?? '',
+        passengerSnapshot: {
+          name: firebaseUser?.displayName ?? '',
+          photoUrl: firebaseUser?.photoURL ?? null
+        },
+        rideSnapshot: {} as any,
+        status: BookingStatus.PENDING,
+        createdAt: new Date()
+      });
+
+      Alert.alert('Solicitação enviada', 'Aguarde a aprovação do motorista em "Minhas caronas".');
+    } catch (error: any) {
+      Alert.alert('Não foi possível solicitar', error.message ?? 'Tente novamente.');
+    } finally {
+      setRequesting(false);
+    }
   }
 
   if (loading) {
@@ -98,6 +141,32 @@ export default function RideDetailScreen({route, navigation}: Props) {
         return status;
     }
   }
+
+  const isOwner = ride.driverId === firebaseUser?.uid;
+  const isFull = ride.approvedCount >= ride.capacity;
+  const isRideClosed = ride.status !== 'ACTIVE';
+
+  function getButtonState() {
+    if (myBooking?.status === BookingStatus.PENDING) {
+      return {label: 'Solicitação enviada', disabled: true};
+    }
+
+    if (myBooking?.status === BookingStatus.APPROVED) {
+      return {label: 'Vaga confirmada', disabled: true};
+    }
+
+    if (isRideClosed) {
+      return {label: 'Carona indisponível', disabled: true};
+    }
+
+    if (isFull) {
+      return {label: 'Carona lotada', disabled: true};
+    }
+
+    return {label: 'Solicitar vaga', disabled: false};
+  }
+
+  const buttonState = getButtonState();
 
   return (
     <SafeAreaView style={styles.container}>
@@ -152,6 +221,8 @@ export default function RideDetailScreen({route, navigation}: Props) {
 
           <View style={styles.separator} />
 
+          {/* DATA + VAGAS */}
+
           <View style={styles.infoRow}>
             <View style={styles.smallCard}>
               <Text style={styles.smallTitle}>Data e hora</Text>
@@ -192,6 +263,7 @@ export default function RideDetailScreen({route, navigation}: Props) {
             <Text style={styles.vehicleText}>{ride.meetingPoint.name}</Text>
           </View>
 
+          {/* OBS */}
 
           {ride.observations ? (
             <View style={styles.vehicleCard}>
@@ -201,9 +273,25 @@ export default function RideDetailScreen({route, navigation}: Props) {
             </View>
           ) : null}
 
-          <TouchableOpacity style={styles.button}>
-            <Text style={styles.buttonText}>Solicitar vaga</Text>
-          </TouchableOpacity>
+          {isOwner ? (
+            <View style={styles.vehicleCard}>
+              <Text style={styles.vehicleText}>
+                Esta é a sua carona. Veja as solicitações em "Minhas caronas".
+              </Text>
+            </View>
+          ) : (
+            <TouchableOpacity
+              style={[styles.button, buttonState.disabled && {opacity: 0.5}]}
+              disabled={buttonState.disabled || requesting}
+              onPress={handleRequestRide}
+            >
+              {requesting ? (
+                <ActivityIndicator color={theme.colors.textOnAccent} />
+              ) : (
+                <Text style={styles.buttonText}>{buttonState.label}</Text>
+              )}
+            </TouchableOpacity>
+          )}
         </View>
       </ScrollView>
     </SafeAreaView>
