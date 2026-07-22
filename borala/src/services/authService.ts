@@ -9,11 +9,17 @@ import { auth, db } from '../firebase/FirebaseConfig';
 import { SignUpInput, LoginInput, UserProfile, UserRole, UserStatus } from '../types/user';
  
 export async function signUp({ name, email, phone, password }: SignUpInput): Promise<UserProfile> {
-  const credential = await createUserWithEmailAndPassword(auth, email.trim(), password);
+
+    console.log('Tentando criar usuário:', email);
+
+    const credential = await createUserWithEmailAndPassword(auth, email.trim(), password);
+    console.log('Usuário Firebase criado:', credential.user.uid);
+
   const { user } = credential;
  
   await updateProfile(user, { displayName: name.trim() });
  
+    console.log('DisplayName atualizado');
   const now = Date.now();
   const profile: UserProfile = {
     id: user.uid,

@@ -1,8 +1,8 @@
 // src/contexts/AuthContext.tsx
-import React, { createContext, useContext, useEffect, useState } from 'react';
-import { onAuthStateChanged, User as FirebaseUser } from 'firebase/auth';
-import { auth } from '../firebase/FirebaseConfig';
-import { UserProfile, SignUpInput, LoginInput } from '../types/user';
+import React, {createContext, useContext, useEffect, useState} from 'react';
+import {onAuthStateChanged, User as FirebaseUser} from 'firebase/auth';
+import {auth} from '../firebase/FirebaseConfig';
+import {UserProfile, SignUpInput, LoginInput} from '../types/user';
 import * as authService from '../services/authService';
 
 interface AuthContextValue {
@@ -16,7 +16,7 @@ interface AuthContextValue {
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
-export function AuthProvider({ children }: { children: React.ReactNode }) {
+export function AuthProvider({children}: {children: React.ReactNode}) {
   const [firebaseUser, setFirebaseUser] = useState<FirebaseUser | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [initializing, setInitializing] = useState(true);
@@ -48,6 +48,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   async function handleLogout() {
     await authService.logout();
+
+    setFirebaseUser(null);
     setProfile(null);
   }
 
@@ -59,7 +61,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         initializing,
         signUp: handleSignUp,
         login: handleLogin,
-        logout: handleLogout,
+        logout: handleLogout
       }}
     >
       {children}
