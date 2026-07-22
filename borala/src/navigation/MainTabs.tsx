@@ -6,12 +6,14 @@ import HomeScreen from '../screens/HomeScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 import NotificationsScreen from '../screens/NotificationsScreen';
 import OfferRideScreen from '../screens/OfferRideScreen';
+import MyRidesScreen from '../screens/Myridesscreen';
 
 import theme from '../theme/Theme';
 
 export type MainTabParamList = {
   Home: undefined;
   Oferecer: undefined;
+  MinhasCaronas: undefined;
   Notificações: undefined;
   Perfil: undefined;
 };
@@ -54,6 +56,17 @@ export default function MainTabs() {
         component={OfferRideScreen}
         options={{
           tabBarIcon: ({color, size}) => <Ionicons name="car-outline" size={size} color={color} />
+        }}
+      />
+
+      <Tab.Screen
+        name="MinhasCaronas"
+        component={MyRidesScreen}
+        options={{
+          title: 'Minhas caronas',
+          tabBarIcon: ({color, size}) => (
+            <Ionicons name="clipboard-outline" size={size} color={color} />
+          )
         }}
       />
 

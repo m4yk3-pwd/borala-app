@@ -4,6 +4,7 @@ import {
   serverTimestamp,
   query,
   orderBy,
+  where,
   limit,
   getDocs,
   getDoc,
@@ -95,4 +96,24 @@ export async function getRideById(id: string): Promise<Ride | null> {
     id: snapshot.id,
     ...snapshot.data()
   } as Ride;
+}
+
+// Caronas oferecidas pelo usuário logado — usado na aba "Minhas caronas" > motorista,
+// para ele ver e gerenciar as solicitações de cada uma.
+export async function getMyRides(): Promise<Ride[]> {
+  const user = auth.currentUser;
+
+  if (!user) {
+    return [];
+  }
+
+  const q = query(
+    collection(db, 'rides'),
+    where('driverId', '==', user.uid),
+    orderBy('createdAt', 'desc')
+  );
+
+  const snapshot = await getDocs(q);
+
+  return snapshot.docs.map((doc) => ({id: doc.id, ...doc.data()}) as Ride);
 }
