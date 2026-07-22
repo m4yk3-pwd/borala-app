@@ -6,7 +6,8 @@ import {
   ScrollView,
   TouchableOpacity,
   ActivityIndicator,
-  Alert
+  Alert,
+  StyleSheet
 } from 'react-native';
 import {Ionicons} from '@expo/vector-icons';
 
@@ -21,6 +22,46 @@ interface Props {
   route: any;
   navigation: any;
 }
+
+const ownerStyles = StyleSheet.create({
+  container: {
+    marginTop: theme.spacing.lg,
+    alignItems: 'center'
+  },
+
+  badge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: theme.colors.accentLight,
+    paddingHorizontal: theme.spacing.lg,
+    paddingVertical: theme.spacing.sm,
+    borderRadius: theme.radius.pill,
+    gap: theme.spacing.xs
+  },
+
+  badgeText: {
+    color: theme.colors.primary,
+    fontFamily: theme.typography.fontFamily.bold,
+    fontSize: theme.typography.size.sm
+  },
+
+  manageButton: {
+    marginTop: theme.spacing.md,
+    alignSelf: 'stretch',
+    alignItems: 'center',
+    borderWidth: 1.5,
+    borderColor: theme.colors.primary,
+    borderRadius: theme.radius.pill,
+    paddingVertical: theme.spacing.md,
+    paddingHorizontal: theme.spacing.xl
+  },
+
+  manageButtonText: {
+    color: theme.colors.primary,
+    fontFamily: theme.typography.fontFamily.bold,
+    fontSize: theme.typography.size.md
+  }
+});
 
 export default function RideDetailScreen({route, navigation}: Props) {
   const {rideId} = route.params;
@@ -78,7 +119,9 @@ export default function RideDetailScreen({route, navigation}: Props) {
     try {
       await createBooking(rideId);
 
-
+      // Atualização otimista local — o valor real de status/createdAt vem do
+      // servidor, mas isso já deixa o botão no estado "Solicitação enviada"
+      // sem precisar buscar o documento de novo.
       setMyBooking({
         id: 'pending-local',
         rideId,
@@ -274,10 +317,18 @@ export default function RideDetailScreen({route, navigation}: Props) {
           ) : null}
 
           {isOwner ? (
-            <View style={styles.vehicleCard}>
-              <Text style={styles.vehicleText}>
-                Esta é a sua carona. Veja as solicitações em "Minhas caronas".
-              </Text>
+            <View style={ownerStyles.container}>
+              <View style={ownerStyles.badge}>
+                <Ionicons name="ribbon-outline" size={16} color={theme.colors.primary} />
+                <Text style={ownerStyles.badgeText}>Você é o motorista desta carona</Text>
+              </View>
+
+              <TouchableOpacity
+                style={ownerStyles.manageButton}
+                onPress={() => navigation.navigate('MainTabs', {screen: 'MinhasCaronas'})}
+              >
+                <Text style={ownerStyles.manageButtonText}>Ver solicitações</Text>
+              </TouchableOpacity>
             </View>
           ) : (
             <TouchableOpacity
